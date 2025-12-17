@@ -8,16 +8,15 @@ def fetch_governor_filings():
     r.raise_for_status()
 
     data = r.json()  # list of filings
-
     filings = []
 
     for item in data:
-office = (item.get("officeSought") or "").strip().lower()
 
-# Filter: ONLY Governor, not Governor's Council
-if office != "governor":
-    continue
+        office = (item.get("officeSought") or "").strip().lower()
 
+        # Filter: ONLY Governor, not Governor's Council
+        if office != "governor":
+            continue
 
         filing_id = str(item.get("reportId", ""))
         date = item.get("dateFiled", "")
@@ -65,20 +64,18 @@ def main():
 
     newest = filings[0]["id"]
 
-    # ---- PRINT LAST 5 FILINGS ALWAYS ----
+    # ---- ALWAYS SHOW MOST RECENT 5 ----
     print("=== MOST RECENT 5 GOVERNOR FILINGS ===")
     for f in filings[:5]:
         print(f"- {f['date']} | {f['committee']} | {f['type']} | {f['url']}")
     print("======================================\n")
     # -------------------------------------
 
-    # First-time run: initialize state
     if last_id is None:
         print("First run — storing state.")
         save_last_id(newest)
         return
 
-    # Determine new filings
     new_filings = []
     for f in filings:
         if f["id"] == last_id:
@@ -96,7 +93,6 @@ def main():
     else:
         print("No new governor filings.")
 
-    # Save the newest filing ID
     save_last_id(newest)
 
 
