@@ -12,11 +12,12 @@ def fetch_governor_filings():
     filings = []
 
     for item in data:
-        office = (item.get("officeSought") or "").lower()
+office = (item.get("officeSought") or "").strip().lower()
 
-        # Filter: Governor filings only
-        if "governor" not in office:
-            continue
+# Filter: ONLY Governor, not Governor's Council
+if office != "governor":
+    continue
+
 
         filing_id = str(item.get("reportId", ""))
         date = item.get("dateFiled", "")
