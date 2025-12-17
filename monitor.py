@@ -1,18 +1,18 @@
 import requests
 
-API_URL = "https://api.ocpf.us/reports/log?name=&pageSize=200"  # increased to capture more rows
+API_URL = "https://api.ocpf.us/reports/log?name=&pageSize=200"  # fetches many rows
 
 
 def fetch_governor_filings():
     r = requests.get(API_URL)
     r.raise_for_status()
 
-    data = r.json()
+    data = r.json()   # <-- This is a LIST, not an object
 
     filings = []
 
-    # The JSON includes a "results" array of filings
-    for item in data.get("results", []):
+    # data is a list of filings
+    for item in data:
         office = item.get("office", "") or ""
         committee = item.get("filerName", "")
         filing_id = str(item.get("reportId", ""))
@@ -24,6 +24,7 @@ def fetch_governor_filings():
         if "governor" not in office.lower():
             continue
 
+        # Construct URL to full filing
         url = f"https://www.ocpf.us/Reports/SearchItems/{filing_id}"
 
         filings.append({
