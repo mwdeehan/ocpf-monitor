@@ -18,12 +18,10 @@ def fetch_governor_2026_filings():
 
         date, committee, office, report_type, total = cols[:5]
 
-        # Filter: only filings for Governor 2026
-        office_lower = office.lower()
-        if "governor" not in office_lower:
-            continue
-        if "2026" not in office_lower:
-            continue
+# Filter: any filings where the office is Governor
+office_lower = office.lower()
+if "governor" not in office_lower:
+    continue
 
         link_tag = row.find("a")
         url = None
