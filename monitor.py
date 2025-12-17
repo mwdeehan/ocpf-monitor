@@ -7,14 +7,14 @@ def fetch_governor_filings():
     r = requests.get(API_URL)
     r.raise_for_status()
 
-    data = r.json()   # list of filings
+    data = r.json()  # list of filings
 
     filings = []
 
     for item in data:
         office = (item.get("officeSought") or "").lower()
 
-        # Filter for Governor filings
+        # Filter: Governor filings only
         if "governor" not in office:
             continue
 
@@ -23,9 +23,8 @@ def fetch_governor_filings():
         committee = item.get("fullNameReverse", "")
         report_type = item.get("reportTypeDescription", "")
         period = item.get("reportingPeriod", "")
-        receipt_total = item.get("receiptTotal", "")
-        expenditure_total = item.get("expenditureTotal", "")
-
+        receipts = item.get("receiptTotal", "")
+        expenditures = item.get("expenditureTotal", "")
         url = item.get("reportLink")
 
         filings.append({
@@ -34,8 +33,8 @@ def fetch_governor_filings():
             "committee": committee,
             "office": office,
             "type": f"{report_type} ({period})",
-            "receipts": receipt_total,
-            "expenditures": expenditure_total,
+            "receipts": receipts,
+            "expenditures": expenditures,
             "url": url,
         })
 
@@ -65,11 +64,20 @@ def main():
 
     newest = filings[0]["id"]
 
+    # ---- PRINT LAST 5 FILINGS ALWAYS ----
+    print("=== MOST RECENT 5 GOVERNOR FILINGS ===")
+    for f in filings[:5]:
+        print(f"- {f['date']} | {f['committee']} | {f['type']} | {f['url']}")
+    print("======================================\n")
+    # -------------------------------------
+
+    # First-time run: initialize state
     if last_id is None:
         print("First run — storing state.")
         save_last_id(newest)
         return
 
+    # Determine new filings
     new_filings = []
     for f in filings:
         if f["id"] == last_id:
@@ -87,6 +95,7 @@ def main():
     else:
         print("No new governor filings.")
 
+    # Save the newest filing ID
     save_last_id(newest)
 
 
