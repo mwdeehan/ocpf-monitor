@@ -1,33 +1,30 @@
 import requests
-from bs4 import BeautifulSoup
 
-OCPF_URL = "https://www.ocpf.us/Reports/Log"
+API_URL = "https://api.ocpf.us/reports/log?name=&pageSize=200"  # increased to capture more rows
+
 
 def fetch_governor_filings():
-    r = requests.get(OCPF_URL)
+    r = requests.get(API_URL)
     r.raise_for_status()
-    soup = BeautifulSoup(r.text, "html.parser")
 
-    rows = soup.select("table.table tbody tr")
+    data = r.json()
+
     filings = []
 
-    for row in rows:
-        cols = [c.get_text(strip=True) for c in row.find_all("td")]
-        if len(cols) < 5:
-            continue
+    # The JSON includes a "results" array of filings
+    for item in data.get("results", []):
+        office = item.get("office", "") or ""
+        committee = item.get("filerName", "")
+        filing_id = str(item.get("reportId", ""))
+        date = item.get("filedDate", "")
+        report_type = item.get("reportName", "")
+        total = item.get("amount", "")
 
-        date, committee, office, report_type, total = cols[:5]
-
+        # Filter for Governor filings
         if "governor" not in office.lower():
             continue
 
-        link_tag = row.find("a")
-        url = None
-        filing_id = None
-
-        if link_tag and "href" in link_tag.attrs:
-            url = "https://www.ocpf.us" + link_tag["href"]
-            filing_id = link_tag["href"].split("/")[-1]
+        url = f"https://www.ocpf.us/Reports/SearchItems/{filing_id}"
 
         filings.append({
             "id": filing_id,
@@ -41,6 +38,7 @@ def fetch_governor_filings():
 
     return filings
 
+
 def load_last_id():
     try:
         with open("state.txt", "r") as f:
@@ -48,9 +46,11 @@ def load_last_id():
     except FileNotFoundError:
         return None
 
+
 def save_last_id(last_id):
     with open("state.txt", "w") as f:
         f.write(last_id)
+
 
 def main():
     last_id = load_last_id()
@@ -76,11 +76,12 @@ def main():
     if new_filings:
         print("NEW GOVERNOR FILINGS:")
         for f in new_filings:
-            print(f"- {f['date']} | {f['committee']} | {f['type']} | {f['url']}")
+            print(f"- {f['date']} | {f['committee']} | {f['type']} | {f['total']} | {f['url']}")
     else:
         print("No new governor filings.")
 
     save_last_id(newest)
+
 
 if __name__ == "__main__":
     main()
