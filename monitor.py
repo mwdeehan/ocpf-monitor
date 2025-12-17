@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 
 OCPF_URL = "https://www.ocpf.us/Reports/Log"
 
-def fetch_governor_2026_filings():
+def fetch_governor_filings():
     r = requests.get(OCPF_URL)
     r.raise_for_status()
     soup = BeautifulSoup(r.text, "html.parser")
@@ -18,10 +18,8 @@ def fetch_governor_2026_filings():
 
         date, committee, office, report_type, total = cols[:5]
 
-# Filter: any filings where the office is Governor
-office_lower = office.lower()
-if "governor" not in office_lower:
-    continue
+        if "governor" not in office.lower():
+            continue
 
         link_tag = row.find("a")
         url = None
@@ -43,7 +41,6 @@ if "governor" not in office_lower:
 
     return filings
 
-
 def load_last_id():
     try:
         with open("state.txt", "r") as f:
@@ -51,18 +48,16 @@ def load_last_id():
     except FileNotFoundError:
         return None
 
-
 def save_last_id(last_id):
     with open("state.txt", "w") as f:
         f.write(last_id)
 
-
 def main():
     last_id = load_last_id()
-    filings = fetch_governor_2026_filings()
+    filings = fetch_governor_filings()
 
     if not filings:
-        print("No governor 2026 filings found.")
+        print("No governor filings found.")
         return
 
     newest = filings[0]["id"]
@@ -79,14 +74,13 @@ def main():
         new_filings.append(f)
 
     if new_filings:
-        print("NEW FILINGS:")
+        print("NEW GOVERNOR FILINGS:")
         for f in new_filings:
             print(f"- {f['date']} | {f['committee']} | {f['type']} | {f['url']}")
     else:
-        print("No new filings.")
+        print("No new governor filings.")
 
     save_last_id(newest)
-
 
 if __name__ == "__main__":
     main()
